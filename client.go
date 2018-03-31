@@ -104,7 +104,7 @@ func Dial(
 		config:                 clientConfig,
 		version:                clientConfig.Versions[0],
 		versionNegotiationChan: make(chan struct{}),
-		logger:                 utils.DefaultLogger,
+		logger:                 utils.DefaultLogger.WithPrefix("client"),
 	}
 
 	c.logger.Infof("Starting new connection to %s (%s -> %s), connectionID %x, version %s", hostname, c.conn.LocalAddr().String(), c.conn.RemoteAddr().String(), c.connectionID, c.version)

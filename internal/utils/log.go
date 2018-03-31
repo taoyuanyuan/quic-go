@@ -36,7 +36,7 @@ type Logger interface {
 }
 
 // DefaultLogger is used by quic-go for logging.
-var DefaultLogger Logger
+var DefaultLogger *defaultLogger
 
 type defaultLogger struct {
 	logLevel   LogLevel
@@ -88,6 +88,67 @@ func (l *defaultLogger) logMessage(format string, args ...interface{}) {
 
 // Debug returns true if the log level is LogLevelDebug
 func (l *defaultLogger) Debug() bool {
+	return l.logLevel == LogLevelDebug
+}
+
+func (l *defaultLogger) WithPrefix(prefix string) Logger {
+	return &prefixLogger{
+		logLevel:   l.logLevel,
+		timeFormat: l.timeFormat,
+		prefix:     prefix,
+	}
+}
+
+type prefixLogger struct {
+	prefix string
+
+	logLevel   LogLevel
+	timeFormat string
+}
+
+// SetLogLevel sets the log level
+func (l *prefixLogger) SetLogLevel(level LogLevel) {
+	l.logLevel = level
+}
+
+// SetLogTimeFormat sets the format of the timestamp
+// an empty string disables the logging of timestamps
+func (l *prefixLogger) SetLogTimeFormat(format string) {
+	log.SetFlags(0) // disable timestamp logging done by the log package
+	l.timeFormat = format
+}
+
+// Debugf logs something
+func (l *prefixLogger) Debugf(format string, args ...interface{}) {
+	if l.logLevel == LogLevelDebug {
+		l.logMessage(format, args...)
+	}
+}
+
+// Infof logs something
+func (l *prefixLogger) Infof(format string, args ...interface{}) {
+	if l.logLevel >= LogLevelInfo {
+		l.logMessage(format, args...)
+	}
+}
+
+// Errorf logs something
+func (l *prefixLogger) Errorf(format string, args ...interface{}) {
+	if l.logLevel >= LogLevelError {
+		l.logMessage(format, args...)
+	}
+}
+
+func (l *prefixLogger) logMessage(format string, args ...interface{}) {
+	if len(l.timeFormat) > 0 {
+		log.Printf(time.Now().Format(l.timeFormat)+" "+l.prefix+" "+format, args...)
+	} else {
+		log.Printf(l.prefix+" "+format, args...)
+	}
+}
+
+// Debug returns true if the log level is LogLevelDebug
+func (l *prefixLogger) Debug() bool {
 	return l.logLevel == LogLevelDebug
 }
 
